@@ -2,33 +2,36 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Painel - IQOption</title>
+    <title>Painel de Sinais</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
-<body>
-    <h1>Painel de Sinais</h1>
-    <form method="POST" enctype="multipart/form-data">
-        <label>Arquivo de sinais (.txt):</label>
-        <input type="file" name="arquivo" required><br>
-        <label>Stop Win:</label>
-        <input type="number" name="stop_win" required><br>
-        <label>Stop Loss:</label>
-        <input type="number" name="stop_loss" required><br>
-        <button type="submit">Carregar Lista</button>
-    </form>
+<body class="painel">
+    <div class="painel-container">
+        <h2>Painel de Sinais</h2>
+        <form action="/iniciar" method="POST" enctype="multipart/form-data">
+            <label>Arquivo de Sinais (.txt):</label>
+            <input type="file" name="arquivo" accept=".txt" required>
 
-    <form method="POST" action="/start-bot">
-        <button type="submit">Iniciar Bot</button>
-    </form>
+            <label>Valor de Entrada (R$):</label>
+            <input type="number" name="valor_entrada" min="1" step="1" required>
 
-    <form method="POST" action="/stop-bot">
-        <button type="submit">Parar Bot</button>
-    </form>
+            <label>Stop Win:</label>
+            <input type="number" name="stop_win" min="1" required>
 
-    <h2>Histórico de Entradas</h2>
-    <ul>
-        {% for entrada in historico %}
-            <li>{{ entrada.horario }} - {{ entrada.par }} - {{ entrada.direcao }} - {{ entrada.resultado }}</li>
-        {% endfor %}
-    </ul>
+            <label>Stop Loss:</label>
+            <input type="number" name="stop_loss" min="1" required>
+
+            <div class="botoes">
+                <button type="submit">Iniciar Bot</button>
+                <button type="submit" formaction="/parar" formmethod="POST">Parar Bot</button>
+                <button type="reset">Limpar Tudo</button>
+            </div>
+        </form>
+
+        <div class="historico">
+            <h3>Histórico de Entradas</h3>
+            <p>(em breve...)</p>
+        </div>
+    </div>
 </body>
 </html>
