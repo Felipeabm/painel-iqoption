@@ -1,0 +1,29 @@
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Painel de Sinais - IQ Option</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <h1>Painel de Sinais</h1>
+  <form action="/iniciar_bot" method="post" enctype="multipart/form-data">
+    <label>Arquivo de sinais:</label>
+    <input type="file" name="arquivo" required><br><br>
+    <label>Stop Win:</label>
+    <input type="number" name="stop_win" value="2" required><br><br>
+    <label>Stop Loss:</label>
+    <input type="number" name="stop_loss" value="1" required><br><br>
+    <button type="submit">Iniciar Bot</button>
+  </form>
+
+  <h2>Histórico de Entradas</h2>
+  <ul>
+    {% for entrada in historico %}
+    <li>{{ entrada.horario }} - {{ entrada.par }} - {{ entrada.resultado }}</li>
+    {% endfor %}
+  </ul>
+  <a href="/logout">Sair</a>
+</body>
+</html>
