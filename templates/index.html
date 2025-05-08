@@ -1,37 +1,75 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Painel de Sinais</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <title>Painel de Sinais IQ Option</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body class="painel">
-    <div class="painel-container">
+<body>
+    <div class="container">
         <h2>Painel de Sinais</h2>
-        <form action="/iniciar" method="POST" enctype="multipart/form-data">
-            <label>Arquivo de Sinais (.txt):</label>
-            <input type="file" name="arquivo" accept=".txt" required>
 
-            <label>Valor de Entrada (R$):</label>
-            <input type="number" name="valor_entrada" min="1" step="1" required>
+        <form id="config-form" method="post" enctype="multipart/form-data">
+            <div class="campo">
+                <label for="arquivo">Arquivo de sinais (.txt)</label>
+                <input type="file" name="arquivo" accept=".txt" required>
+            </div>
 
-            <label>Stop Win:</label>
-            <input type="number" name="stop_win" min="1" required>
+            <div class="campo">
+                <label for="valor_entrada">Valor da entrada</label>
+                <input type="number" name="valor_entrada" step="0.01" required>
+            </div>
 
-            <label>Stop Loss:</label>
-            <input type="number" name="stop_loss" min="1" required>
+            <div class="campo">
+                <label for="stop_win">Stop Win (R$)</label>
+                <input type="number" name="stop_win" step="0.01" required>
+            </div>
+
+            <div class="campo">
+                <label for="stop_loss">Stop Loss (R$)</label>
+                <input type="number" name="stop_loss" step="0.01" required>
+            </div>
 
             <div class="botoes">
-                <button type="submit">Iniciar Bot</button>
-                <button type="submit" formaction="/parar" formmethod="POST">Parar Bot</button>
-                <button type="reset">Limpar Tudo</button>
+                <button type="submit" formaction="/start">Iniciar Bot</button>
+                <button type="submit" formaction="/stop">Parar Bot</button>
+                <button type="button" onclick="limparCampos()">Limpar Tudo</button>
             </div>
         </form>
 
         <div class="historico">
             <h3>Histórico de Entradas</h3>
-            <p>(em breve...)</p>
+            <div id="historico-entradas">
+                {% if historico %}
+                    <ul>
+                        {% for entrada in historico %}
+                            <li>{{ entrada }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>Nenhuma entrada registrada ainda.</p>
+                {% endif %}
+            </div>
         </div>
     </div>
+
+    <!-- Áudio de alerta -->
+    <audio id="alerta" src="{{ url_for('static', filename='alert.wav') }}"></audio>
+
+    <script>
+        function limparCampos() {
+            document.querySelector('form').reset();
+        }
+
+        function tocarAlerta() {
+            document.getElementById('alerta').play();
+        }
+
+        // Exemplo: tocar som ao enviar formulário
+        const form = document.getElementById('config-form');
+        form.addEventListener('submit', () => {
+            tocarAlerta();
+        });
+    </script>
 </body>
 </html>
