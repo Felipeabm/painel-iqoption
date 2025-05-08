@@ -41,7 +41,8 @@ def painel():
                     sinais.append(linha.strip())
         return redirect(url_for('painel'))
 
-    return render_template('painel.html', historico=historico, stop_win=stop_win, stop_loss=stop_loss)
+    return render_template('index.html', historico=historico, stop_win=stop_win, stop_loss=stop_loss)
+
 
 @app.route('/start-bot', methods=['POST'])
 def start_bot():
