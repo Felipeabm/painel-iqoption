@@ -1,39 +1,50 @@
+# iq_connect.py
+
 try:
-    from iqoptionapi.api import IQ_Option
+    from iqoptionapi.api import IQ_Option  # Versões mais recentes do pacote
 except ImportError:
-    from iqoptionapi.stable_api import IQ_Option
+    from iqoptionapi.stable_api import IQ_Option  # Versões antigas do pacote
 
 import time
+from datetime import datetime
 
-def executar_sinais(email, senha, conta, sinais, valor):
+# Conecta na IQ Option
+def conectar(email, senha):
     Iq = IQ_Option(email, senha)
     Iq.connect()
-
-    if conta == "demo":
-        Iq.change_balance("practice")
+    if Iq.check_connect():
+        print("✅ Conectado com sucesso na IQ Option!")
+        return Iq
     else:
-        Iq.change_balance("REAL")
+        print("❌ Falha ao conectar na IQ Option.")
+        return None
 
-    if not Iq.check_connect():
-        return "Erro ao conectar na IQ Option."
+# Executa os sinais lidos do arquivo sinais.txt
+def executar_sinais(email, senha):
+    Iq = conectar(email, senha)
+    if not Iq:
+        return
 
-    for linha in sinais:
-        if not linha.strip():
-            continue
-        try:
-            horario, par, direcao, timeframe = linha.strip().split(';')
-            timeframe = int(timeframe)
+    Iq.change_balance("PRACTICE")  # ou "REAL"
 
-            # Esperar até o horário do sinal
-            while True:
-                agora = time.strftime('%H:%M')
-                if agora == horario:
-                    break
-                time.sleep(1)
+    with open("sinais.txt", "r") as f:
+        sinais = [linha.strip() for linha in f if linha.strip()]
 
-            print(f"Executando sinal: {par} - {direcao} - {timeframe} - {valor}")
-            status, id = Iq.buy(valor, par, direcao, timeframe)
-            print(f"Entrada executada? {status} - ID: {id}")
+    print("🔄 Aguardando horário dos sinais...")
 
-        except Exception as e:
-            print(f"Erro ao executar sinal: {linha} - {e}")
+    while sinais:
+        agora = datetime.now().strftime("%H:%M")
+        for sinal in sinais[:]:
+            partes = sinal.split()
+            if len(partes) < 3:
+                continue  # sinal mal formatado
+            horario, par, direcao = partes
+            if horario == agora:
+                print(f"📤 Executando sinal das {horario} | Par: {par} | Direção: {direcao.upper()}")
+                status, id = Iq.buy(2, par, direcao.lower(), 1)  # Entrada de R$2, expiração M1
+                if status:
+                    print(f"✅ Entrada realizada com sucesso! ID: {id}")
+                else:
+                    print("❌ Falha ao realizar a entrada.")
+                sinais.remove(sinal)
+        time.sleep(1)
