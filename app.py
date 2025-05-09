@@ -1,10 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for, session, send_from_directory, jsonify
-from werkzeug.utils import secure_filename
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 import os
-import datetime
 
 app = Flask(__name__)
-app.secret_key = 'sua_chave_secreta'
+app.secret_key = 'sua_chave_secreta_aqui'
 
 UPLOAD_FOLDER = 'uploads'
 if not os.path.exists(UPLOAD_FOLDER):
@@ -12,84 +10,80 @@ if not os.path.exists(UPLOAD_FOLDER):
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Simula histórico de entradas
-historico_entradas = []
+# Rota de login
+@app.route('/', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        usuario = request.form['usuario']
+        senha = request.form['senha']
+        conta = request.form.get('conta')  # demo ou real
 
-@app.route('/')
-def index():
+        if usuario and senha:
+            session['usuario'] = usuario
+            session['conta'] = conta
+            return redirect(url_for('painel'))
+        else:
+            flash('Usuário ou senha inválidos.')
+
     return render_template('login.html')
 
-@app.route('/login', methods=['POST'])
-def login():
-    email = request.form['email']
-    senha = request.form['senha']
-    conta = request.form['conta']
-    if email and senha:
-        session['usuario'] = email
-        session['conta'] = conta
-        return redirect(url_for('painel'))
-    return redirect(url_for('index'))
 
-@app.route('/painel')
+# Rota do painel
+@app.route('/painel', methods=['GET'])
 def painel():
     if 'usuario' not in session:
-        return redirect(url_for('index'))
+        return redirect(url_for('login'))
     return render_template('index.html')
 
-@app.route('/upload', methods=['POST'])
-def upload():
-    if 'arquivo' not in request.files:
-        return 'Nenhum arquivo enviado', 400
-    file = request.files['arquivo']
-    if file.filename == '':
-        return 'Nome de arquivo vazio', 400
-    filename = secure_filename(file.filename)
-    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    file.save(filepath)
-    session['arquivo'] = filepath
-    return 'Arquivo enviado com sucesso'
 
-@app.route('/iniciar', methods=['POST'])
-def iniciar():
+# Rota para iniciar o bot
+@app.route('/iniciar-bot', methods=['POST'])
+def iniciar_bot():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    arquivo = request.files.get('arquivo')
+    valor = request.form.get('valor')
+    stop_win = request.form.get('stop_win')
+    stop_loss = request.form.get('stop_loss')
+
+    if not arquivo or not valor or not stop_win or not stop_loss:
+        return "Preencha todos os campos!", 400
+
+    # Salvar arquivo no servidor
+    caminho = os.path.join(app.config['UPLOAD_FOLDER'], arquivo.filename)
+    arquivo.save(caminho)
+
+    # Ler conteúdo do arquivo .txt
     try:
-        entrada = request.form['entrada']
-        stop_win = request.form['stop_win']
-        stop_loss = request.form['stop_loss']
-        arquivo = session.get('arquivo')
-
-        if not all([entrada, stop_win, stop_loss, arquivo]):
-            return "Dados incompletos para iniciar o bot", 400
-
-        # Simulação da lógica de bot e registro no histórico
-        historico_entradas.append({
-            "data": datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            "status": "Bot Iniciado",
-            "arquivo": os.path.basename(arquivo)
-        })
-        return jsonify({"mensagem": "Bot iniciado com sucesso"})
+        with open(caminho, 'r') as f:
+            sinais = f.readlines()
     except Exception as e:
-        return f"Erro interno: {str(e)}", 500
+        return f"Erro ao ler o arquivo: {str(e)}", 500
 
-@app.route('/historico')
-def historico():
-    return jsonify(historico_entradas)
+    # Aqui começaria a lógica do bot (conectando com IQ Option, etc)
+    print("Bot iniciado com os seguintes parâmetros:")
+    print(f"Valor: {valor}")
+    print(f"Stop Win: {stop_win}")
+    print(f"Stop Loss: {stop_loss}")
+    print(f"Total de sinais carregados: {len(sinais)}")
 
-@app.route('/limpar', methods=['POST'])
-def limpar():
-    session.pop('arquivo', None)
-    return 'Limpo com sucesso'
+    return "Bot iniciado com sucesso!"
 
+
+# Rota para parar o bot (futura implementação)
+@app.route('/parar-bot', methods=['POST'])
+def parar_bot():
+    print("Bot foi parado manualmente.")
+    return "Bot parado com sucesso!"
+
+
+# Logout
 @app.route('/logout')
 def logout():
     session.clear()
-    return redirect(url_for('index'))
+    return redirect(url_for('login'))
 
-# Arquivo de áudio
-@app.route('/audio/<filename>')
-def audio(filename):
-    return send_from_directory('static/audio', filename)
 
 if __name__ == '__main__':
-    import os
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(debug=True)
