@@ -1,48 +1,36 @@
-# iq_connect.py
-
-from iqoptionapi.api import IQ_Option
+from iqoptionapi.stable_api import IQ_Option  # Versão funcional estável
 import time
-from datetime import datetime
-
-def conectar(email, senha):
-    Iq = IQ_Option(email, senha)
-    Iq.connect()
-    if Iq.check_connect():
-        print("✅ Conectado com sucesso na IQ Option!")
-        return Iq
-    else:
-        print("❌ Falha ao conectar na IQ Option.")
-        return None
 
 def executar_sinais(email, senha):
-    Iq = conectar(email, senha)
-    if not Iq:
+    print("Iniciando login na IQ Option...")
+    Iq = IQ_Option(email, senha)
+    Iq.connect()
+
+    if Iq.check_connect():
+        print("Login bem-sucedido!")
+    else:
+        print("Erro ao conectar. Verifique seu email/senha.")
         return
 
-    Iq.change_balance("PRACTICE")  # Use "REAL" se for conta real
+    # Configurações iniciais
+    Iq.change_balance("PRACTICE")  # ou "REAL"
 
-    try:
-        with open("sinais.txt", "r") as f:
-            sinais = [linha.strip() for linha in f if linha.strip()]
-    except FileNotFoundError:
-        print("❌ Arquivo 'sinais.txt' não encontrado.")
-        return
+    # Leitura dos sinais
+    with open("sinais.txt", "r") as arquivo:
+        sinais = arquivo.readlines()
 
-    print("🕒 Aguardando sinais...")
+    for sinal in sinais:
+        dados = sinal.strip().split(",")
+        if len(dados) != 3:
+            continue
 
-    while sinais:
-        agora = datetime.now().strftime("%H:%M")
-        for sinal in sinais[:]:
-            partes = sinal.split()
-            if len(partes) < 3:
-                continue
-            horario, par, direcao = partes
-            if horario == agora:
-                print(f"⏰ {horario} | Executando entrada: {par} - {direcao.upper()}")
-                status, id = Iq.buy(2, par, direcao.lower(), 1)
-                if status:
-                    print(f"✅ Entrada realizada com sucesso! ID: {id}")
-                else:
-                    print("❌ Falha ao realizar a entrada.")
-                sinais.remove(sinal)
-        time.sleep(1)
+        horario, par, direcao = dados
+        print(f"Aguardando para enviar sinal: {horario} | {par} | {direcao}")
+
+        while True:
+            hora_atual = time.strftime("%H:%M")
+            if hora_atual == horario:
+                print(f"Enviando sinal: {par} | {direcao}")
+                Iq.buy(2, par, direcao.lower(), 1)  # valor, par, direcao, tempo expiração
+                break
+            time.sleep(1)
