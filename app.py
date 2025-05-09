@@ -1,3 +1,5 @@
+from iq_connect import executar_sinais
+
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import os
 
@@ -49,7 +51,14 @@ def iniciar_bot():
 
     if not arquivo or not valor or not stop_win or not stop_loss:
         return "Preencha todos os campos!", 400
+# Executar os sinais
+usuario = session['usuario']
+conta = session.get('conta', 'demo')  # padrão demo
 
+resposta = executar_sinais(usuario, senha="senha_aqui", conta=conta, sinais=sinais, valor=float(valor))
+print(resposta)
+
+    
     # Salvar arquivo no servidor
     caminho = os.path.join(app.config['UPLOAD_FOLDER'], arquivo.filename)
     arquivo.save(caminho)
