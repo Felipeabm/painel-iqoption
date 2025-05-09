@@ -1,4 +1,8 @@
-from iqoptionapi.stable_api import IQ_Option
+try:
+    from iqoptionapi.api import IQ_Option
+except ImportError:
+    from iqoptionapi.stable_api import IQ_Option
+
 import time
 
 def executar_sinais(email, senha, conta, sinais, valor):
