@@ -1,36 +1,47 @@
-from iqoptionapi.stable_api import IQ_Option  # Versão funcional estável
 import time
+from iqoptionapi.stable_api import IQ_Option
 
 def executar_sinais(email, senha):
     print("Iniciando login na IQ Option...")
-    Iq = IQ_Option(email, senha)
-    Iq.connect()
+    API = IQ_Option(email, senha)
+    API.connect()
 
-    if Iq.check_connect():
-        print("Login bem-sucedido!")
-    else:
-        print("Erro ao conectar. Verifique seu email/senha.")
+    if not API.check_connect():
+        print("Erro ao conectar com a IQ Option. Verifique seu e-mail/senha.")
         return
 
-    # Configurações iniciais
-    Iq.change_balance("PRACTICE")  # ou "REAL"
+    print("Conectado com sucesso!")
 
-    # Leitura dos sinais
-    with open("sinais.txt", "r") as arquivo:
-        sinais = arquivo.readlines()
+    try:
+        with open("sinais.txt", "r") as arquivo:
+            sinais = arquivo.readlines()
+    except FileNotFoundError:
+        print("Arquivo 'sinais.txt' não encontrado. Nenhum sinal foi executado.")
+        return
 
-    for sinal in sinais:
-        dados = sinal.strip().split(",")
-        if len(dados) != 3:
+    for linha in sinais:
+        try:
+            tempo, par, horario, direcao = linha.strip().split(";")
+            print(f"Aguardando horário {horario} para entrar no par {par} ({direcao})...")
+
+            while True:
+                agora = time.strftime("%H:%M")
+                if agora == horario:
+                    duracao = int(tempo.replace("M", ""))  # Ex: "M1" -> 1
+                    valor = 2  # valor fixo; pode ser parametrizado depois
+                    entrada = API.buy(valor, par, direcao.lower(), duracao)
+
+                    if entrada[0]:
+                        print(f"✅ Entrada realizada: {par} | Direção: {direcao} | Expiração: {tempo}")
+                    else:
+                        print(f"❌ Erro ao realizar entrada: {par}")
+
+                    break
+                time.sleep(1)
+
+        except ValueError:
+            print(f"Formato de linha inválido: {linha}")
             continue
 
-        horario, par, direcao = dados
-        print(f"Aguardando para enviar sinal: {horario} | {par} | {direcao}")
-
-        while True:
-            hora_atual = time.strftime("%H:%M")
-            if hora_atual == horario:
-                print(f"Enviando sinal: {par} | {direcao}")
-                Iq.buy(2, par, direcao.lower(), 1)  # valor, par, direcao, tempo expiração
-                break
-            time.sleep(1)
+    API.disconnect()
+    print("Bot finalizado.")
