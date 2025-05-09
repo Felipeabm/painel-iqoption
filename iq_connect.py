@@ -1,14 +1,9 @@
 # iq_connect.py
 
-try:
-    from iqoptionapi.api import IQ_Option  # Versões mais recentes do pacote
-except ImportError:
-    from iqoptionapi.stable_api import IQ_Option  # Versões antigas do pacote
-
+from iqoptionapi.api import IQ_Option
 import time
 from datetime import datetime
 
-# Conecta na IQ Option
 def conectar(email, senha):
     Iq = IQ_Option(email, senha)
     Iq.connect()
@@ -19,7 +14,6 @@ def conectar(email, senha):
         print("❌ Falha ao conectar na IQ Option.")
         return None
 
-# Executa os sinais lidos do arquivo sinais.txt
 def executar_sinais(email, senha):
     Iq = conectar(email, senha)
     if not Iq:
@@ -37,11 +31,11 @@ def executar_sinais(email, senha):
         for sinal in sinais[:]:
             partes = sinal.split()
             if len(partes) < 3:
-                continue  # sinal mal formatado
+                continue
             horario, par, direcao = partes
             if horario == agora:
                 print(f"📤 Executando sinal das {horario} | Par: {par} | Direção: {direcao.upper()}")
-                status, id = Iq.buy(2, par, direcao.lower(), 1)  # Entrada de R$2, expiração M1
+                status, id = Iq.buy(2, par, direcao.lower(), 1)
                 if status:
                     print(f"✅ Entrada realizada com sucesso! ID: {id}")
                 else:
