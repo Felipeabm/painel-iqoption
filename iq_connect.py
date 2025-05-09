@@ -1,10 +1,11 @@
 import os
-from iqoptionapi.stable_api import IQ_Option
+from iqoptionapi.api import IQOption  # Corrigido: import direto
+
 import time
 
 def executar_sinais(email, senha):
     print(f"[INFO] Conectando com {email}...")
-    Iq = IQ_Option(email, senha)
+    Iq = IQOption(email, senha)
     Iq.connect()
 
     if not Iq.check_connect():
@@ -24,7 +25,7 @@ def executar_sinais(email, senha):
         try:
             tempo, par, horario, direcao = sinal.strip().split(';')
             print(f"[SINAL] Timeframe: {tempo} | Par: {par} | Horário: {horario} | Direção: {direcao}")
-            # Aqui você pode adicionar lógica real de entrada
+            # Aqui você pode adicionar a lógica de entrada real
         except Exception as e:
             print(f"[ERRO] Falha ao interpretar sinal: {sinal} -> {e}")
     
