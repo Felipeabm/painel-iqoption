@@ -1,7 +1,6 @@
-from iq_connect import executar_sinais
-
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import os
+from iq_connect import executar_sinais  # Importa a função que executa os sinais na IQ Option
 
 app = Flask(__name__)
 app.secret_key = 'sua_chave_secreta_aqui'
@@ -22,6 +21,7 @@ def login():
 
         if usuario and senha:
             session['usuario'] = usuario
+            session['senha'] = senha  # Armazena senha na sessão temporariamente
             session['conta'] = conta
             return redirect(url_for('painel'))
         else:
@@ -29,14 +29,12 @@ def login():
 
     return render_template('login.html')
 
-
 # Rota do painel
 @app.route('/painel', methods=['GET'])
 def painel():
     if 'usuario' not in session:
         return redirect(url_for('login'))
     return render_template('index.html')
-
 
 # Rota para iniciar o bot
 @app.route('/iniciar-bot', methods=['POST'])
@@ -51,14 +49,7 @@ def iniciar_bot():
 
     if not arquivo or not valor or not stop_win or not stop_loss:
         return "Preencha todos os campos!", 400
-# Executar os sinais
-usuario = session['usuario']
-conta = session.get('conta', 'demo')  # padrão demo
 
-resposta = executar_sinais(usuario, senha="senha_aqui", conta=conta, sinais=sinais, valor=float(valor))
-print(resposta)
-
-    
     # Salvar arquivo no servidor
     caminho = os.path.join(app.config['UPLOAD_FOLDER'], arquivo.filename)
     arquivo.save(caminho)
@@ -70,15 +61,16 @@ print(resposta)
     except Exception as e:
         return f"Erro ao ler o arquivo: {str(e)}", 500
 
-    # Aqui começaria a lógica do bot (conectando com IQ Option, etc)
-    print("Bot iniciado com os seguintes parâmetros:")
-    print(f"Valor: {valor}")
-    print(f"Stop Win: {stop_win}")
-    print(f"Stop Loss: {stop_loss}")
-    print(f"Total de sinais carregados: {len(sinais)}")
+    # Obter dados da sessão
+    usuario = session.get('usuario')
+    senha = session.get('senha')
+    conta = session.get('conta', 'demo')
+
+    # Executar os sinais na IQ Option
+    resposta = executar_sinais(usuario, senha, conta, sinais, float(valor))
+    print(resposta)
 
     return "Bot iniciado com sucesso!"
-
 
 # Rota para parar o bot (futura implementação)
 @app.route('/parar-bot', methods=['POST'])
@@ -86,17 +78,12 @@ def parar_bot():
     print("Bot foi parado manualmente.")
     return "Bot parado com sucesso!"
 
-
 # Logout
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('login'))
 
-
-import os
-
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))  # Render define a porta por variável de ambiente
     app.run(host='0.0.0.0', port=port)
-
