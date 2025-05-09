@@ -1,3 +1,4 @@
+flask
 iqoptionapi
 requests
 websocket-client
