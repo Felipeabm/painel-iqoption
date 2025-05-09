@@ -1,39 +1,35 @@
-
+from iqoptionapi.stable_api import IQ_Option
 import time
 
-def iniciar_bot(caminho_arquivo, email, senha, stop_win, stop_loss, historico):
-    with open(caminho_arquivo, 'r') as file:
-        sinais = file.readlines()
+def executar_sinais(email, senha, conta, sinais, valor):
+    Iq = IQ_Option(email, senha)
+    Iq.connect()
 
-    ganhos = 0
-    perdas = 0
+    if conta == "demo":
+        Iq.change_balance("practice")
+    else:
+        Iq.change_balance("REAL")
+
+    if not Iq.check_connect():
+        return "Erro ao conectar na IQ Option."
 
     for linha in sinais:
-        if ganhos >= stop_win or perdas >= stop_loss:
-            break
-
+        if not linha.strip():
+            continue
         try:
-            timeframe, par, horario, direcao = linha.strip().split(';')
-            resultado = executar_entrada(par, direcao)
+            horario, par, direcao, timeframe = linha.strip().split(';')
+            timeframe = int(timeframe)
 
-            entrada = {
-                'par': par,
-                'horario': horario,
-                'resultado': resultado
-            }
+            # Esperar até o horário do sinal
+            while True:
+                agora = time.strftime('%H:%M')
+                if agora == horario:
+                    break
+                time.sleep(1)
 
-            historico.append(entrada)
-
-            if resultado == 'WIN':
-                ganhos += 1
-            else:
-                perdas += 1
-
-            time.sleep(2)  # Simulando tempo entre operações
+            print(f"Executando sinal: {par} - {direcao} - {timeframe} - {valor}")
+            status, id = Iq.buy(valor, par, direcao, timeframe)
+            print(f"Entrada executada? {status} - ID: {id}")
 
         except Exception as e:
-            print(f"Erro ao processar sinal: {linha}, erro: {e}")
-
-def executar_entrada(par, direcao):
-    print(f"Executando entrada {direcao} em {par}...")
-    return 'WIN'  # Simulado sempre como WIN
+            print(f"Erro ao executar sinal: {linha} - {e}")
